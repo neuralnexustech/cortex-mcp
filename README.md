@@ -312,6 +312,14 @@ cortex-mcp/
 - Node.js ≥ 18.0.0
 - Works on Windows, macOS, Linux
 
+## Links
+
+| Platform | URL |
+|----------|-----|
+| Website | https://neuralnexustech.com/ |
+| GitHub | https://github.com/neuralnexustech/cortex-mcp |
+| npm | https://www.npmjs.com/package/@neuralnexustech/cortex-mcp |
+
 ## License
 
-MIT © [neuralnexustech](https://github.com/neuralnexustech)
+MIT © [neuralnexustech](https://neuralnexustech.com/)
