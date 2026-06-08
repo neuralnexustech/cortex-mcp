@@ -1,0 +1,4 @@
+﻿{"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"cortex-mcp","version":"1.0.0"}},"jsonrpc":"2.0","id":1}
+{"result":{"content":[{"type":"text","text":"{\n  \"tables\": {\n    \"project\": 0,\n    \"features\": 0,\n    \"file_tree\": 0,\n    \"todos\": 0,\n    \"tests\": 0,\n    \"progress_log\": 0,\n    \"issues\": 0,\n    \"dictionary\": 0,\n    \"snippets\": 0,\n    \"research\": 0,\n    \"decisions\": 0,\n    \"snapshots\": 0,\n    \"checkpoints\": 0\n  },\n  \"issues\": [],\n  \"openIssues\": 0,\n  \"pendingTests\": 0,\n  \"brokenFiles\": 0\n}"}]},"jsonrpc":"2.0","id":2}
+{"result":{"content":[{"type":"text","text":"No project initialized. Call cortex_init first."}]},"jsonrpc":"2.0","id":4}
+{"result":{"content":[{"type":"text","text":"ALL TASKS COMPLETE"}]},"jsonrpc":"2.0","id":5}

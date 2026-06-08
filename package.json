@@ -1,0 +1,74 @@
+{
+  "name": "cortex-mcp",
+  "version": "2.1.0",
+  "type": "module",
+  "description": "Persistent brain, memory, loop controller, and reminder engine for AI coding agents",
+  "main": "src/server.js",
+  "bin": {
+    "cortex": "./bin/cortex.js",
+    "cortex-mcp": "./bin/cortex.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "skills/",
+    "docs/",
+    "dashboard/dist/"
+  ],
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dashboard": "node bin/cortex.js dashboard",
+    "test": "node phase4-verify.mjs",
+    "dev": "node phase4-verify.mjs",
+    "build:dashboard": "cd dashboard && npm run build",
+    "postinstall": "cd dashboard && npm install && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neuralnexustech/cortex-mcp.git"
+  },
+  "homepage": "https://github.com/neuralnexustech/cortex-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/neuralnexustech/cortex-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "agent",
+    "memory",
+    "cortex",
+    "claude",
+    "gemini",
+    "codex",
+    "cursor",
+    "opencode",
+    "skill",
+    "dashboard",
+    "knowledge-graph",
+    "search"
+  ],
+  "author": "neuralnexustech",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "better-sqlite3": "^12.10.0",
+    "chalk": "^5.0.0",
+    "commander": "^12.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.0",
+    "minimatch": "^9.0.0",
+    "onnxruntime-node": "^1.26.0",
+    "ws": "^8.21.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}

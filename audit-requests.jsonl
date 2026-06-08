@@ -1,0 +1,21 @@
+﻿{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"audit","version":"1.0.0"}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"cortex_health","arguments":{}}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"cortex_init","arguments":{"project_name":"Audit Test","goal":"Testing all tools","stack":"Node.js","core_features":"auth,dashboard,api"}}
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"cortex_get_state","arguments":{}}}
+{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"cortex_get_next_task","arguments":{}}}
+{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"cortex_add_feature","arguments":{"name":"Test Feature","description":"A test feature","priority":"high"}}
+{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"cortex_update_feature","arguments":{"id":1,"status":"in-progress"}}
+{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"cortex_tick_file","arguments":{"file_path":"src/test.js","status":"done"}}
+{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"cortex_add_test","arguments":{"name":"test.test.js","feature_id":1}}
+{"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"cortex_update_test","arguments":{"id":1,"status":"passed"}}
+{"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"cortex_log_issue","arguments":{"title":"Test bug","description":"A test bug","file_path":"src/test.js"}}
+{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"cortex_resolve_issue","arguments":{"id":1,"fix":"Fixed the bug"}}
+{"jsonrpc":"2.0","id":13,"method":"tools/call","params":{"name":"cortex_write_dictionary","arguments":{"key":"src/test.js","short_summary":"Test file","full_description":"Full test file description"}}
+{"jsonrpc":"2.0","id":14,"method":"tools/call","params":{"name":"cortex_get_detail","arguments":{"key":"src/test.js"}}
+{"jsonrpc":"2.0","id":15,"method":"tools/call","params":{"name":"cortex_log_progress","arguments":{"task":"Completed test","file_path":"src/test.js","notes":"All good","agent":"claude"}}
+{"jsonrpc":"2.0","id":16,"method":"tools/call","params":{"name":"cortex_add_snippet","arguments":{"title":"Test Snippet","code":"console.log(1)","language":"javascript","tags":"test"}}
+{"jsonrpc":"2.0","id":17,"method":"tools/call","params":{"name":"cortex_add_research","arguments":{"library_name":"react","version":"18.0","notes":"React is great","source_url":"https://react.dev"}}
+{"jsonrpc":"2.0","id":18,"method":"tools/call","params":{"name":"cortex_add_decision","arguments":{"title":"Use React","reason":"Best for UI"}}
+{"jsonrpc":"2.0","id":19,"method":"tools/call","params":{"name":"cortex_check_reminders","arguments":{}}
+{"jsonrpc":"2.0","id":20,"method":"tools/call","params":{"name":"cortex_save_snapshot","arguments":{"summary":"Session complete","session_id":"session-audit"}}
+{"jsonrpc":"2.0","id":21,"method":"tools/call","params":{"name":"cortex_set_active_project","arguments":{"project_path":"C:\\Users\\bidre\\Downloads\\work\\core\\cortex-mcp"}}

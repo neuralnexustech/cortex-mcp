@@ -1,0 +1,10 @@
+node_modules/
+/dist/
+.cortex/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.local
+error.log
+scripts/
