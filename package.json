@@ -1,5 +1,5 @@
 {
-  "name": "cortex-mcp",
+  "name": "@neuralnexustech/cortex-mcp",
   "version": "2.1.0",
   "type": "module",
   "description": "Persistent brain, memory, loop controller, and reminder engine for AI coding agents",
