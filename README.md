@@ -58,7 +58,7 @@ Add to your `opencode.json`:
   "mcp": {
     "cortex": {
       "type": "local",
-      "command": ["npx", "-y", "@neuralnexustech/cortex-mcp", "start", "--project", "."],
+      "command": ["npx", "-y", "@neuralnexustech/cortex-mcp@latest", "start", "--project", "."],
       "enabled": true,
       "env": {
         "CORTEX_PROJECT_PATH": "."
