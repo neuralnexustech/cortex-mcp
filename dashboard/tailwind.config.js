@@ -7,14 +7,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        'cortex-bg': '#0a0a0f',
+        'cortex-bg': '#0a0e17',
+        'cortex-card': '#111827',
+        'cortex-border': '#1f2937',
+        'cortex-text': '#f3f4f6',
+        'cortex-muted': '#9ca3af',
+        'cortex-cyan': '#06b6d4',
         'cortex-panel': '#12121a',
-        'cortex-border': '#1e1e2e',
-        'cortex-cyan': '#00f5d4',
         'cortex-yellow': '#f5c400',
         'cortex-red': '#ff3a3a',
-        'cortex-gray': '#444466',
-        'cortex-green': '#39ff14',
+        'cortex-green': '#22c55e',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
