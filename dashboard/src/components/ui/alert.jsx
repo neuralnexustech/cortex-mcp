@@ -6,12 +6,12 @@ const Alert = React.forwardRef(({ className, variant = "default", ...props }, re
     ref={ref}
     role="alert"
     className={cn(
-      "relative w-full rounded-lg border p-4",
+      "relative w-full rounded-2xl border p-4",
       {
-        "border-cortex-border bg-cortex-card text-cortex-text": variant === "default",
-        "border-red-500/50 bg-red-500/10 text-red-400": variant === "destructive",
-        "border-green-500/50 bg-green-500/10 text-green-400": variant === "success",
-        "border-yellow-500/50 bg-yellow-500/10 text-yellow-400": variant === "warning",
+        "border-gray-200 bg-white text-gray-900": variant === "default",
+        "border-red-200 bg-red-50 text-red-700": variant === "destructive",
+        "border-green-200 bg-green-50 text-green-700": variant === "success",
+        "border-orange-200 bg-orange-50 text-orange-700": variant === "warning",
       },
       className
     )}

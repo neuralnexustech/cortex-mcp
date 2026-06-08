@@ -155,4 +155,28 @@ CREATE TABLE IF NOT EXISTS human_questions (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   answered_at DATETIME
 );
+
+CREATE TABLE IF NOT EXISTS workflows (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'active',
+  agent TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS workflow_nodes (
+  id INTEGER PRIMARY KEY,
+  workflow_id INTEGER NOT NULL,
+  parent_id INTEGER,
+  label TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  sort_order INTEGER DEFAULT 0,
+  agent TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME,
+  FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_id) REFERENCES workflow_nodes(id) ON DELETE CASCADE
+);
 `;

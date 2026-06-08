@@ -7,16 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        'cortex-bg': '#0a0e17',
-        'cortex-card': '#111827',
-        'cortex-border': '#1f2937',
-        'cortex-text': '#f3f4f6',
-        'cortex-muted': '#9ca3af',
-        'cortex-cyan': '#06b6d4',
-        'cortex-panel': '#12121a',
-        'cortex-yellow': '#f5c400',
-        'cortex-red': '#ff3a3a',
-        'cortex-green': '#22c55e',
+        'cortex-bg': '#f8f9fc',
+        'cortex-card': '#ffffff',
+        'cortex-border': '#e5e7eb',
+        'cortex-text': '#111827',
+        'cortex-muted': '#6b7280',
+        'cortex-cyan': '#7c3aed',
+        'cortex-green': '#10b981',
+        'cortex-orange': '#f59e0b',
+        'cortex-red': '#ef4444',
+        'cortex-blue': '#3b82f6',
+        'cortex-purple': '#8b5cf6',
+        'cortex-panel': '#ffffff',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -59,6 +61,11 @@ export default {
       fontFamily: {
         'mono': ['JetBrains Mono', 'monospace'],
         'heading': ['Syne', 'sans-serif'],
+      },
+      boxShadow: {
+        'cortex': '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
+        'cortex-md': '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+        'cortex-lg': '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03)',
       },
       keyframes: {
         "accordion-down": {

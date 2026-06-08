@@ -1,12 +1,12 @@
 export function Skeleton({ className = '' }) {
   return (
-    <div className={`animate-pulse bg-cortex-border/50 rounded ${className}`} />
+    <div className={`animate-pulse bg-gray-200 rounded-lg ${className}`} />
   )
 }
 
 export function CardSkeleton() {
   return (
-    <div className="bg-cortex-card border border-cortex-border rounded-xl p-4 space-y-3">
+    <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3 shadow-sm">
       <Skeleton className="h-5 w-1/3" />
       <Skeleton className="h-4 w-2/3" />
       <Skeleton className="h-3 w-1/2" />
@@ -37,8 +37,8 @@ export function ListSkeleton({ items = 5 }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="bg-cortex-card border border-cortex-border rounded-lg p-3 flex items-center gap-3">
-          <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+        <div key={i} className="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+          <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-1/3" />
             <Skeleton className="h-3 w-2/3" />
@@ -53,7 +53,7 @@ export function StatsSkeleton() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-cortex-card border border-cortex-border rounded-xl p-4 space-y-2">
+        <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 space-y-2 shadow-sm">
           <Skeleton className="h-3 w-1/2" />
           <Skeleton className="h-8 w-1/3" />
         </div>

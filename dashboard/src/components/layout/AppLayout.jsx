@@ -50,7 +50,7 @@ export default function AppLayout() {
   const ActiveTab = TABS[activeTab] || Overview
 
   return (
-    <div className="flex h-screen bg-cortex-bg overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: 'linear-gradient(135deg, #f8f9fc 0%, #f0f2f9 50%, #eef1f8 100%)' }}>
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
