@@ -71,7 +71,7 @@ Add to your `opencode.json`:
 ### Option 2: Local Install
 
 ```bash
-npm install -g @neuralnexustech/cortex-mcp
+npm install -g @neuralnexustech/cortex-mcp@latest
 ```
 
 Then add to `opencode.json`:
