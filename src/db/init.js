@@ -51,9 +51,39 @@ export function findNextAvailablePort() {
   } catch (_) {}
   let apiPort = 3001;
   let mcpPort = 4759;
-  const used = new Set(Object.values(registry).map(p => p.api_port));
-  while (used.has(apiPort)) apiPort++;
+  const usedApi = new Set(Object.values(registry).map(p => p.api_port));
+  const usedMcp = new Set(Object.values(registry).map(p => p.mcp_port));
+  while (usedApi.has(apiPort)) apiPort++;
+  while (usedMcp.has(mcpPort)) mcpPort++;
   return { api_port: apiPort, mcp_port: mcpPort };
+}
+
+export function registerAgent(projectPath, agentId, config) {
+  const agentsDir = path.join(path.resolve(projectPath), '.cortex', 'agents');
+  if (!fs.existsSync(agentsDir)) fs.mkdirSync(agentsDir, { recursive: true });
+  const agentFile = path.join(agentsDir, `${agentId}.json`);
+  fs.writeFileSync(agentFile, JSON.stringify({
+    agentId,
+    api_port: config.api_port,
+    mcp_port: config.mcp_port,
+    started_at: new Date().toISOString()
+  }, null, 2));
+}
+
+export function unregisterAgent(projectPath, agentId) {
+  const agentFile = path.join(path.resolve(projectPath), '.cortex', 'agents', `${agentId}.json`);
+  try { fs.unlinkSync(agentFile); } catch (_) {}
+}
+
+export function listAgents(projectPath) {
+  const agentsDir = path.join(path.resolve(projectPath), '.cortex', 'agents');
+  if (!fs.existsSync(agentsDir)) return [];
+  return fs.readdirSync(agentsDir)
+    .filter(f => f.endsWith('.json'))
+    .map(f => {
+      try { return JSON.parse(fs.readFileSync(path.join(agentsDir, f), 'utf8')); } catch (_) { return null; }
+    })
+    .filter(Boolean);
 }
 
 export function registerPort(projectPath, config) {

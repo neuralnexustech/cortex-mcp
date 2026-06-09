@@ -37,7 +37,37 @@ function getDatabase() {
   return getDb(CURRENT_PROJECT_PATH);
 }
 
+function buildProjectEntry(dir) {
+  const cortexDir = path.join(dir, '.cortex');
+  const dbPath = path.join(cortexDir, 'cortex.db');
+  if (!fs.existsSync(dbPath)) return null;
+  let config = {};
+  try { config = JSON.parse(fs.readFileSync(path.join(cortexDir, 'config.json'), 'utf8')); } catch (_) {}
+  let features = 0, files = 0, tests = 0, name = config.name || path.basename(dir), goal = '', stack = '';
+  try {
+    const db = getDb(dir);
+    const project = db.prepare("SELECT * FROM project WHERE status = 'active' ORDER BY id DESC LIMIT 1").get();
+    name = project?.name || name;
+    goal = project?.goal || '';
+    stack = project?.stack || '';
+    features = db.prepare('SELECT COUNT(*) as c FROM features').get().c;
+    files = db.prepare("SELECT COUNT(*) as c FROM file_tree WHERE status = 'done'").get().c;
+    tests = db.prepare('SELECT COUNT(*) as c FROM tests').get().c;
+  } catch (_) {}
+  return {
+    path: dir, name, goal, stack,
+    features, files, tests,
+    api_port: config.api_port || 3001,
+    mcp_port: config.mcp_port || 4759,
+    is_active: path.resolve(dir) === path.resolve(CURRENT_PROJECT_PATH)
+  };
+}
+
 function scanProjects() {
+  if (process.env.CORTEX_SINGLE_PROJECT === '1') {
+    const entry = buildProjectEntry(CURRENT_PROJECT_PATH);
+    return entry ? [entry] : [];
+  }
   const projects = [];
   const visited = new Set();
   const dirs = [CURRENT_PROJECT_PATH, process.cwd()];
@@ -45,38 +75,11 @@ function scanProjects() {
     try {
       let dir = path.resolve(start);
       for (let i = 0; i < 5; i++) {
-        const cortexDir = path.join(dir, '.cortex');
-        const dbPath = path.join(cortexDir, 'cortex.db');
+        const dbPath = path.join(dir, '.cortex', 'cortex.db');
         if (fs.existsSync(dbPath) && !visited.has(dbPath)) {
           visited.add(dbPath);
-          try {
-            const db = getDb(dir);
-            const project = db.prepare("SELECT * FROM project WHERE status = 'active' ORDER BY id DESC LIMIT 1").get();
-            let config = {};
-            try { config = JSON.parse(fs.readFileSync(path.join(cortexDir, 'config.json'), 'utf8')); } catch (_) {}
-            projects.push({
-              path: dir,
-              name: project?.name || config.name || path.basename(dir),
-              goal: project?.goal || '',
-              stack: project?.stack || '',
-              features: db.prepare('SELECT COUNT(*) as c FROM features').get().c,
-              files: db.prepare("SELECT COUNT(*) as c FROM file_tree WHERE status = 'done'").get().c,
-              tests: db.prepare('SELECT COUNT(*) as c FROM tests').get().c,
-              api_port: config.api_port || 3001,
-              mcp_port: config.mcp_port || 4759,
-              is_active: path.resolve(dir) === path.resolve(CURRENT_PROJECT_PATH)
-            });
-          } catch (_) {
-            let config = {};
-            try { config = JSON.parse(fs.readFileSync(path.join(cortexDir, 'config.json'), 'utf8')); } catch (_) {}
-            projects.push({
-              path: dir, name: config.name || path.basename(dir), goal: '', stack: '',
-              features: 0, files: 0, tests: 0,
-              api_port: config.api_port || 3001,
-              mcp_port: config.mcp_port || 4759,
-              is_active: false
-            });
-          }
+          const entry = buildProjectEntry(dir);
+          if (entry) projects.push(entry);
         }
         const parent = path.dirname(dir);
         if (parent === dir) break;

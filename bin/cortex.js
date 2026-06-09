@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
-import { getOrCreateConfig, writeConfig, registerPort, findNextAvailablePort } from '../src/db/init.js';
+import { getOrCreateConfig, writeConfig, registerPort, registerAgent, unregisterAgent, findNextAvailablePort } from '../src/db/init.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,6 +81,12 @@ program
     process.env.CORTEX_PROJECT_PATH = projectPath;
     process.env.CORTEX_API_PORT = String(config.api_port);
     process.env.CORTEX_PORT = String(config.mcp_port);
+    process.env.CORTEX_SINGLE_PROJECT = '1';
+
+    const agentId = `agent-${config.api_port}`;
+    registerAgent(projectPath, agentId, config);
+    process.on('exit', () => { try { unregisterAgent(projectPath, agentId); } catch (_) {} });
+    process.on('SIGINT', () => { try { unregisterAgent(projectPath, agentId); } catch (_) {} process.exit(0); });
 
     const binPath = path.resolve(__dirname, 'cortex.js');
     const child = spawn('node', [binPath, 'dashboard', '--project', projectPath], {
@@ -104,6 +110,7 @@ program
     process.env.CORTEX_PROJECT_PATH = projectPath;
     process.env.CORTEX_API_PORT = options.port || String(config.api_port);
     process.env.CORTEX_PORT = options.dashboardPort || String(config.mcp_port);
+    process.env.CORTEX_SINGLE_PROJECT = '1';
     import('../src/api/server.js');
   });
 
