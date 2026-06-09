@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useAppStore from '../stores/useAppStore'
 import { useProjectData, useProjects } from '../hooks/useProjectData'
-import { FolderKanban, Check, ArrowRight, Database, FileCode, FlaskConical, Activity, RefreshCw } from 'lucide-react'
+import { FolderKanban, Check, ArrowRight, Database, FileCode, FlaskConical, Activity, RefreshCw, Network } from 'lucide-react'
 
 function ProjectCard({ project, onSwitch, switching }) {
   const isActive = project.is_active
@@ -44,6 +44,10 @@ function ProjectCard({ project, onSwitch, switching }) {
           <div className="flex items-center gap-1.5 text-xs text-cortex-muted">
             <FlaskConical className="w-3.5 h-3.5" />
             <span>{project.tests} tests</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-cortex-muted">
+            <Network className="w-3.5 h-3.5" />
+            <span>:{project.api_port}</span>
           </div>
           <div className="ml-auto">
             {!isActive && (

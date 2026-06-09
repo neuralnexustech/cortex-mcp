@@ -52,20 +52,29 @@ function scanProjects() {
           try {
             const db = getDb(dir);
             const project = db.prepare("SELECT * FROM project WHERE status = 'active' ORDER BY id DESC LIMIT 1").get();
+            let config = {};
+            try { config = JSON.parse(fs.readFileSync(path.join(cortexDir, 'config.json'), 'utf8')); } catch (_) {}
             projects.push({
               path: dir,
-              name: project?.name || path.basename(dir),
+              name: project?.name || config.name || path.basename(dir),
               goal: project?.goal || '',
               stack: project?.stack || '',
               features: db.prepare('SELECT COUNT(*) as c FROM features').get().c,
               files: db.prepare("SELECT COUNT(*) as c FROM file_tree WHERE status = 'done'").get().c,
               tests: db.prepare('SELECT COUNT(*) as c FROM tests').get().c,
+              api_port: config.api_port || 3001,
+              mcp_port: config.mcp_port || 4759,
               is_active: path.resolve(dir) === path.resolve(CURRENT_PROJECT_PATH)
             });
           } catch (_) {
+            let config = {};
+            try { config = JSON.parse(fs.readFileSync(path.join(cortexDir, 'config.json'), 'utf8')); } catch (_) {}
             projects.push({
-              path: dir, name: path.basename(dir), goal: '', stack: '',
-              features: 0, files: 0, tests: 0, is_active: false
+              path: dir, name: config.name || path.basename(dir), goal: '', stack: '',
+              features: 0, files: 0, tests: 0,
+              api_port: config.api_port || 3001,
+              mcp_port: config.mcp_port || 4759,
+              is_active: false
             });
           }
         }

@@ -11,6 +11,65 @@ const BUNDLED_SKILLS_DIR = path.resolve(__dirname, '../../skills');
 
 const dbInstances = {};
 
+export function getConfigPath(projectPath) {
+  return path.join(path.resolve(projectPath), '.cortex', 'config.json');
+}
+
+export function readConfig(projectPath) {
+  const configPath = getConfigPath(projectPath);
+  try {
+    if (fs.existsSync(configPath)) {
+      return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+  } catch (_) {}
+  return null;
+}
+
+export function writeConfig(projectPath, config) {
+  const configPath = getConfigPath(projectPath);
+  const dir = path.dirname(configPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+}
+
+export function getOrCreateConfig(projectPath) {
+  let config = readConfig(projectPath);
+  if (!config) {
+    config = { api_port: 3001, mcp_port: 4759, created_at: new Date().toISOString() };
+    writeConfig(projectPath, config);
+  }
+  return config;
+}
+
+export function findNextAvailablePort() {
+  const registryPath = path.join(process.env.HOME || process.env.USERPROFILE || '', '.cortex', 'ports.json');
+  let registry = {};
+  try {
+    if (fs.existsSync(registryPath)) {
+      registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+    }
+  } catch (_) {}
+  let apiPort = 3001;
+  let mcpPort = 4759;
+  const used = new Set(Object.values(registry).map(p => p.api_port));
+  while (used.has(apiPort)) apiPort++;
+  return { api_port: apiPort, mcp_port: mcpPort };
+}
+
+export function registerPort(projectPath, config) {
+  const registryPath = path.join(process.env.HOME || process.env.USERPROFILE || '', '.cortex', 'ports.json');
+  const dir = path.dirname(registryPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  let registry = {};
+  try {
+    if (fs.existsSync(registryPath)) {
+      registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+    }
+  } catch (_) {}
+  registry[path.resolve(projectPath)] = config;
+  fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2));
+}
+
 /**
  * Returns a better-sqlite3 Database instance for the given project path.
  * Creates .cortex/ folder structure if it doesn't exist.

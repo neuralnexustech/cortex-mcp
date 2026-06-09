@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
+import { getOrCreateConfig, writeConfig, registerPort, findNextAvailablePort } from '../src/db/init.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +15,7 @@ const program = new Command();
 program
   .name('cortex')
   .description('Cortex MCP - Persistent brain for AI coding agents')
-  .version('2.0.0');
+  .version('2.6.0');
 
 program
   .command('init')
@@ -34,11 +35,19 @@ program
       console.log('✓ .cortex/ already exists');
     }
 
+    const ports = findNextAvailablePort();
+    let config = getOrCreateConfig(projectPath);
+    config.api_port = config.api_port || ports.api_port;
+    config.mcp_port = config.mcp_port || ports.mcp_port;
+    config.name = path.basename(projectPath);
+    writeConfig(projectPath, config);
+    registerPort(projectPath, config);
+
     console.log(`✓ Cortex initialized in: ${projectPath}`);
     console.log(`✓ Database: ${path.join(cortexDir, 'cortex.db')}`);
+    console.log(`✓ Config: ${path.join(cortexDir, 'config.json')}`);
     console.log('');
 
-    // Absolute path to bin/cortex.js for MCP config
     const binPath = path.resolve(__dirname, 'cortex.js');
     const mcpConfig = {
       mcpServers: {
@@ -55,8 +64,8 @@ program
     console.log(JSON.stringify(mcpConfig, null, 2));
     console.log('─────────────────────────────────────────────────────────────');
     console.log('');
-    console.log('Dashboard: http://localhost:4759');
-    console.log('REST API:  http://localhost:3001');
+    console.log(`Dashboard: http://localhost:${config.mcp_port}`);
+    console.log(`REST API:  http://localhost:${config.api_port}`);
     console.log('');
     console.log('Start the server with:  cortex start --project ' + projectPath);
     console.log('Start the dashboard with:  cortex dashboard --project ' + projectPath);
@@ -68,9 +77,11 @@ program
   .option('--project <path>', 'Project path', process.cwd())
   .action((options) => {
     const projectPath = path.resolve(options.project);
+    const config = getOrCreateConfig(projectPath);
     process.env.CORTEX_PROJECT_PATH = projectPath;
+    process.env.CORTEX_API_PORT = String(config.api_port);
+    process.env.CORTEX_PORT = String(config.mcp_port);
 
-    // Spawn the API/Dashboard server in the background
     const binPath = path.resolve(__dirname, 'cortex.js');
     const child = spawn('node', [binPath, 'dashboard', '--project', projectPath], {
       detached: true,
@@ -85,12 +96,14 @@ program
   .command('dashboard')
   .description('Start the dashboard REST API server')
   .option('--project <path>', 'Project path', process.cwd())
-  .option('--port <port>', 'API port number', '3001')
-  .option('--dashboard-port <port>', 'Dashboard port number', '4759')
+  .option('--port <port>', 'API port number')
+  .option('--dashboard-port <port>', 'Dashboard port number')
   .action((options) => {
-    process.env.CORTEX_PROJECT_PATH = path.resolve(options.project);
-    process.env.CORTEX_API_PORT = options.port;
-    process.env.CORTEX_PORT = options.dashboardPort;
+    const projectPath = path.resolve(options.project);
+    const config = getOrCreateConfig(projectPath);
+    process.env.CORTEX_PROJECT_PATH = projectPath;
+    process.env.CORTEX_API_PORT = options.port || String(config.api_port);
+    process.env.CORTEX_PORT = options.dashboardPort || String(config.mcp_port);
     import('../src/api/server.js');
   });
 
@@ -100,6 +113,7 @@ program
   .action(async () => {
     const cwd = process.cwd();
     const dbPath = path.join(cwd, '.cortex', 'cortex.db');
+    const configPath = path.join(cwd, '.cortex', 'config.json');
 
     if (!fs.existsSync(dbPath)) {
       console.log('No Cortex project found in current directory. Run "cortex init" first.');
@@ -108,6 +122,12 @@ program
 
     console.log(`✓ Cortex project found at: ${cwd}`);
     console.log(`✓ Database: ${dbPath}`);
+
+    try {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      console.log(`✓ API Port: ${config.api_port}`);
+      console.log(`✓ MCP Port: ${config.mcp_port}`);
+    } catch (_) {}
 
     try {
       const { createRequire } = await import('module');
