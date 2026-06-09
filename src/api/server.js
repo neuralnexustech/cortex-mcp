@@ -76,6 +76,15 @@ function registerRoutes(router) {
     handleRoute(res, (db) => queries.getFiles(db));
   });
 
+  router.patch('/files/:id/link-test', (req, res) => {
+    const { test_id } = req.body;
+    if (!test_id) return res.status(400).json({ error: 'Missing test_id' });
+    handleRoute(res, (db) => {
+      db.prepare('UPDATE file_tree SET test_id = ? WHERE id = ?').run(test_id, req.params.id);
+      return { success: true, file: db.prepare('SELECT * FROM file_tree WHERE id = ?').get(req.params.id) };
+    });
+  });
+
   router.get('/tests', (req, res) => {
     handleRoute(res, (db) => queries.getTests(db));
   });

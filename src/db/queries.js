@@ -84,8 +84,8 @@ export function updateFeature(db, id, data) {
 export function tickFile(db, data) {
   const existing = db.prepare('SELECT * FROM file_tree WHERE file_path = ?').get(data.file_path);
   if (existing) {
-    db.prepare('UPDATE file_tree SET status = ?, feature_id = ?, agent = ? WHERE file_path = ?')
-      .run(data.status ?? 'done', data.feature_id ?? null, data.agent ?? null, data.file_path);
+    db.prepare('UPDATE file_tree SET status = ?, feature_id = ?, test_id = ?, agent = ? WHERE file_path = ?')
+      .run(data.status ?? 'done', data.feature_id ?? null, data.test_id ?? null, data.agent ?? null, data.file_path);
   } else {
     db.prepare(
       'INSERT INTO file_tree (file_path, status, feature_id, test_id, agent) VALUES (?, ?, ?, ?, ?)'

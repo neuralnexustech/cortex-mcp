@@ -32,6 +32,7 @@ export function registerFileTools(server, withDb, getProjectPath) {
       file_path: z.string().describe('File path (relative to project root)'),
       status: z.string().optional().describe('Status (done, in-progress, pending)'),
       feature_id: z.number().optional().describe('Linked feature ID'),
+      test_id: z.number().optional().describe('Linked test ID'),
       agent: z.string().optional().describe('Agent name')
     },
     async (args) => {
@@ -75,6 +76,7 @@ export function registerFileTools(server, withDb, getProjectPath) {
             file_path: normalizedPath,
             status: args.status || 'done',
             feature_id: args.feature_id,
+            test_id: args.test_id,
             agent: args.agent || 'unknown'
           });
 
