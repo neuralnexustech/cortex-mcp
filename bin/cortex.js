@@ -87,6 +87,7 @@ program
     registerAgent(projectPath, agentId, config);
     process.on('exit', () => { try { unregisterAgent(projectPath, agentId); } catch (_) {} });
     process.on('SIGINT', () => { try { unregisterAgent(projectPath, agentId); } catch (_) {} process.exit(0); });
+    process.on('SIGTERM', () => { try { unregisterAgent(projectPath, agentId); } catch (_) {} process.exit(0); });
 
     const binPath = path.resolve(__dirname, 'cortex.js');
     const child = spawn('node', [binPath, 'dashboard', '--project', projectPath], {

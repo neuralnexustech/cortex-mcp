@@ -1,5 +1,5 @@
 import useAppStore from '../../stores/useAppStore'
-import { Search, Wifi, WifiOff, Bell, Command, Layers, ChevronRight } from 'lucide-react'
+import { Search, Wifi, WifiOff, Bell, Command, Layers, ChevronRight, Lock } from 'lucide-react'
 import { useProjectData } from '../../hooks/useProjectData'
 
 export default function TopBar({ projectName }) {
@@ -7,6 +7,8 @@ export default function TopBar({ projectName }) {
   const toggleSearch = useAppStore((s) => s.toggleSearch)
   const setActiveTab = useAppStore((s) => s.setActiveTab)
   const activeTab = useAppStore((s) => s.activeTab)
+  const { data } = useProjectData()
+  const isolated = data?.isolated ?? false
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-sm border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
@@ -19,6 +21,11 @@ export default function TopBar({ projectName }) {
           <h1 className="text-lg font-semibold">{projectName}</h1>
           <ChevronRight className="w-3.5 h-3.5 text-cortex-muted opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
+        {isolated && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-600 border border-amber-200">
+            <Lock className="w-2.5 h-2.5" /> isolated
+          </span>
+        )}
         <span className="text-sm text-cortex-muted">/ {activeTab}</span>
       </div>
 

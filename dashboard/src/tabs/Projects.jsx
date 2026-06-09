@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import useAppStore from '../stores/useAppStore'
 import { useProjectData, useProjects } from '../hooks/useProjectData'
-import { FolderKanban, Check, ArrowRight, Database, FileCode, FlaskConical, Activity, RefreshCw, Network } from 'lucide-react'
+import { FolderKanban, Check, ArrowRight, Database, FileCode, FlaskConical, Activity, RefreshCw, Network, Lock, Bot } from 'lucide-react'
 
 function ProjectCard({ project, onSwitch, switching }) {
   const isActive = project.is_active
+  const isLocked = project.locked
   return (
     <div
       className={`rounded-2xl border transition-all ${
@@ -21,6 +22,11 @@ function ProjectCard({ project, onSwitch, switching }) {
               {isActive && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-600">
                   <Check className="w-3 h-3" /> Active
+                </span>
+              )}
+              {isLocked && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-600">
+                  <Lock className="w-3 h-3" /> Isolated
                 </span>
               )}
             </div>
@@ -49,11 +55,17 @@ function ProjectCard({ project, onSwitch, switching }) {
             <Network className="w-3.5 h-3.5" />
             <span>:{project.api_port}</span>
           </div>
+          {project.mcp_port && (
+            <div className="flex items-center gap-1.5 text-xs text-cortex-muted">
+              <Activity className="w-3.5 h-3.5" />
+              <span>:{project.mcp_port}</span>
+            </div>
+          )}
           <div className="ml-auto">
             {!isActive && (
               <button
                 onClick={() => onSwitch(project.path)}
-                disabled={switching}
+                disabled={switching || isLocked}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-purple-50 text-cortex-cyan hover:bg-purple-100 disabled:opacity-50 transition-colors"
               >
                 {switching ? (
@@ -69,6 +81,18 @@ function ProjectCard({ project, onSwitch, switching }) {
             )}
           </div>
         </div>
+        {project.agents && project.agents.length > 0 && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
+            <Bot className="w-3.5 h-3.5 text-cortex-muted" />
+            <span className="text-[11px] text-cortex-muted font-medium">Running agents:</span>
+            {project.agents.map((agent, i) => (
+              <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-green-50 text-green-600">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                :{agent.mcp_port}
+              </span>
+            ))}
+          </div>
+        )}
         <p className="text-xs text-cortex-muted/50 mt-3 font-mono truncate">{project.path}</p>
       </div>
     </div>
@@ -82,6 +106,8 @@ export default function Projects() {
   const { data: projectsData, isLoading, refetch } = useProjects()
 
   const projects = projectsData?.projects || data?.projects_available || []
+  const isolated = projectsData?.isolated ?? data?.isolated ?? false
+  const isolatedProject = projects.find(p => p.is_active) || projects[0]
 
   async function handleSwitch(projectPath) {
     setSwitching(projectPath)
@@ -91,6 +117,12 @@ export default function Projects() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: projectPath })
       })
+      if (res.status === 403) {
+        const result = await res.json()
+        alert(result.message || 'Project switching blocked in isolated mode')
+        setSwitching(null)
+        return
+      }
       const result = await res.json()
       if (result.success) {
         window.location.reload()
@@ -118,6 +150,22 @@ export default function Projects() {
           <RefreshCw className="w-3.5 h-3.5" /> Refresh
         </button>
       </div>
+
+      {isolated && isolatedProject && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 flex items-start gap-3">
+          <Lock className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-amber-800">Running in Isolated Mode</p>
+            <p className="text-xs text-amber-600 mt-1">
+              This dashboard is locked to <span className="font-semibold">{isolatedProject.name}</span> ({isolatedProject.path}).
+              Switching projects is disabled. To work with another project, stop this instance and start a new one with a different path.
+            </p>
+            <p className="text-xs text-amber-600 mt-1.5 font-mono">
+              cortex dashboard --project /path/to/other/project
+            </p>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-sm text-cortex-muted">Scanning for projects...</div>

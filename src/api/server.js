@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { getDb, closeDb } from '../db/init.js';
+import { getDb, closeDb, listAgents } from '../db/init.js';
 import * as queries from '../db/queries.js';
 import { initWebSocket, emitEvent } from '../websocket/server.js';
 import { createAuditLogger } from '../audit/index.js';
@@ -54,9 +54,12 @@ function buildProjectEntry(dir) {
     files = db.prepare("SELECT COUNT(*) as c FROM file_tree WHERE status = 'done'").get().c;
     tests = db.prepare('SELECT COUNT(*) as c FROM tests').get().c;
   } catch (_) {}
+  let agents = [];
+  try { agents = listAgents(dir); } catch (_) {}
   return {
     path: dir, name, goal, stack,
     features, files, tests,
+    agents,
     api_port: config.api_port || 3001,
     mcp_port: config.mcp_port || 4759,
     is_active: path.resolve(dir) === path.resolve(CURRENT_PROJECT_PATH)
@@ -141,14 +144,18 @@ function registerRoutes(router) {
       pipelines: queries.getPipelineRuns(db).slice(0, 5),
       pipeline_active: queries.getActivePipelineRun(db),
       projects_current: CURRENT_PROJECT_PATH,
-      projects_available: scanProjects()
+      projects_available: scanProjects(),
+      isolated: process.env.CORTEX_SINGLE_PROJECT === '1',
+      project_agents: (() => { try { return listAgents(CURRENT_PROJECT_PATH); } catch (_) { return []; } })()
     }));
   });
 
   // GET /api/projects — list all discovered cortex projects
   router.get('/projects', (req, res) => {
     try {
-      res.json({ current: CURRENT_PROJECT_PATH, projects: scanProjects() });
+      const locked = process.env.CORTEX_SINGLE_PROJECT === '1';
+      const projects = scanProjects().map(p => ({ ...p, locked }));
+      res.json({ current: CURRENT_PROJECT_PATH, projects });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -156,6 +163,9 @@ function registerRoutes(router) {
 
   // POST /api/projects/switch — switch active project
   router.post('/projects/switch', (req, res) => {
+    if (process.env.CORTEX_SINGLE_PROJECT === '1') {
+      return res.status(403).json({ error: 'Project switching blocked', message: 'Dashboard is running in isolated mode. Stop it and restart with a different --project path.' });
+    }
     const { path: projectPath } = req.body;
     if (!projectPath) return res.status(400).json({ error: 'Missing path' });
     try {

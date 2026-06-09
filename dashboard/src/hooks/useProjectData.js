@@ -50,6 +50,8 @@ export function useProjectData() {
       pipeline_active: data.pipeline_active || null,
       projects_current: data.projects_current || '',
       projects_available: data.projects_available || [],
+      isolated: data.isolated ?? false,
+      project_agents: data.project_agents || [],
     }),
   })
 }
