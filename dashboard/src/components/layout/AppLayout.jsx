@@ -7,6 +7,7 @@ import { StatsSkeleton } from '../LoadingSkeleton'
 import ErrorBoundary from '../ErrorBoundary'
 
 const Overview = lazy(() => import('../../tabs/Overview'))
+const Projects = lazy(() => import('../../tabs/Projects'))
 const Features = lazy(() => import('../../tabs/Features'))
 const FileTree = lazy(() => import('../../tabs/FileTree'))
 const Tests = lazy(() => import('../../tabs/Tests'))
@@ -22,6 +23,7 @@ const Pipeline = lazy(() => import('../../tabs/Pipeline'))
 const TABS = {
   overview: Overview,
   pipeline: Pipeline,
+  projects: Projects,
   features: Features,
   files: FileTree,
   tests: Tests,

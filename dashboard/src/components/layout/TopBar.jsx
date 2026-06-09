@@ -1,15 +1,24 @@
 import useAppStore from '../../stores/useAppStore'
-import { Search, Wifi, WifiOff, Bell, Command } from 'lucide-react'
+import { Search, Wifi, WifiOff, Bell, Command, Layers, ChevronRight } from 'lucide-react'
+import { useProjectData } from '../../hooks/useProjectData'
 
 export default function TopBar({ projectName }) {
   const wsConnected = useAppStore((s) => s.wsConnected)
   const toggleSearch = useAppStore((s) => s.toggleSearch)
+  const setActiveTab = useAppStore((s) => s.setActiveTab)
   const activeTab = useAppStore((s) => s.activeTab)
 
   return (
     <header className="h-16 bg-white/80 backdrop-blur-sm border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
       <div className="flex items-center gap-3">
-        <h1 className="text-lg font-semibold text-cortex-text">{projectName}</h1>
+        <button
+          onClick={() => setActiveTab('projects')}
+          className="flex items-center gap-2 text-cortex-text hover:text-cortex-cyan transition-colors group"
+        >
+          <Layers className="w-4 h-4 text-cortex-cyan" />
+          <h1 className="text-lg font-semibold">{projectName}</h1>
+          <ChevronRight className="w-3.5 h-3.5 text-cortex-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
         <span className="text-sm text-cortex-muted">/ {activeTab}</span>
       </div>
 

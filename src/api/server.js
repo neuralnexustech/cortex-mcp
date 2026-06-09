@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { getDb } from '../db/init.js';
+import { getDb, closeDb } from '../db/init.js';
 import * as queries from '../db/queries.js';
 import { initWebSocket, emitEvent } from '../websocket/server.js';
 import { createAuditLogger } from '../audit/index.js';
@@ -29,10 +29,73 @@ app.use(cors({
 }));
 app.use(express.json());
 
-const PROJECT_PATH = process.env.CORTEX_PROJECT_PATH || process.cwd();
+let CURRENT_PROJECT_PATH = process.env.CORTEX_PROJECT_PATH || process.cwd();
+let cachedProjects = null;
+let cachedProjectsTime = 0;
 
 function getDatabase() {
-  return getDb(PROJECT_PATH);
+  return getDb(CURRENT_PROJECT_PATH);
+}
+
+function scanProjects() {
+  const projects = [];
+  const visited = new Set();
+  const dirs = [CURRENT_PROJECT_PATH, process.cwd()];
+  for (const start of dirs) {
+    try {
+      let dir = path.resolve(start);
+      for (let i = 0; i < 5; i++) {
+        const cortexDir = path.join(dir, '.cortex');
+        const dbPath = path.join(cortexDir, 'cortex.db');
+        if (fs.existsSync(dbPath) && !visited.has(dbPath)) {
+          visited.add(dbPath);
+          try {
+            const db = getDb(dir);
+            const project = db.prepare("SELECT * FROM project WHERE status = 'active' ORDER BY id DESC LIMIT 1").get();
+            projects.push({
+              path: dir,
+              name: project?.name || path.basename(dir),
+              goal: project?.goal || '',
+              stack: project?.stack || '',
+              features: db.prepare('SELECT COUNT(*) as c FROM features').get().c,
+              files: db.prepare("SELECT COUNT(*) as c FROM file_tree WHERE status = 'done'").get().c,
+              tests: db.prepare('SELECT COUNT(*) as c FROM tests').get().c,
+              is_active: path.resolve(dir) === path.resolve(CURRENT_PROJECT_PATH)
+            });
+          } catch (_) {
+            projects.push({
+              path: dir, name: path.basename(dir), goal: '', stack: '',
+              features: 0, files: 0, tests: 0, is_active: false
+            });
+          }
+        }
+        const parent = path.dirname(dir);
+        if (parent === dir) break;
+        dir = parent;
+      }
+    } catch (_) {}
+  }
+  return projects;
+}
+
+function switchProject(newPath) {
+  const resolved = path.resolve(newPath);
+  const dbPath = path.join(resolved, '.cortex', 'cortex.db');
+  if (!fs.existsSync(dbPath)) {
+    throw new Error(`No cortex project found at: ${resolved}`);
+  }
+  closeDb(CURRENT_PROJECT_PATH);
+  CURRENT_PROJECT_PATH = resolved;
+  process.env.CORTEX_PROJECT_PATH = resolved;
+  cachedProjects = null;
+  cachedProjectsTime = 0;
+  if (dbWatcher) {
+    clearInterval(dbWatcher);
+    dbWatcher = null;
+  }
+  startDbWatcher();
+  try { emitEvent('project_switched', { path: resolved, timestamp: Date.now() }); } catch (_) {}
+  return getDb(resolved);
 }
 
 function handleRoute(res, fn) {
@@ -64,8 +127,35 @@ function registerRoutes(router) {
       decisions: queries.getDecisions(db),
       snapshots: queries.getSnapshots(db),
       pipelines: queries.getPipelineRuns(db).slice(0, 5),
-      pipeline_active: queries.getActivePipelineRun(db)
+      pipeline_active: queries.getActivePipelineRun(db),
+      projects_current: CURRENT_PROJECT_PATH,
+      projects_available: scanProjects()
     }));
+  });
+
+  // GET /api/projects — list all discovered cortex projects
+  router.get('/projects', (req, res) => {
+    try {
+      res.json({ current: CURRENT_PROJECT_PATH, projects: scanProjects() });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/projects/switch — switch active project
+  router.post('/projects/switch', (req, res) => {
+    const { path: projectPath } = req.body;
+    if (!projectPath) return res.status(400).json({ error: 'Missing path' });
+    try {
+      const db = switchProject(projectPath);
+      res.json({
+        success: true,
+        current: CURRENT_PROJECT_PATH,
+        project: queries.getProject(db)
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   router.get('/features', (req, res) => {
@@ -379,7 +469,7 @@ let dbWatcher = null;
 let lastMtime = 0;
 
 function startDbWatcher() {
-  const dbPath = path.join(PROJECT_PATH, '.cortex', 'cortex.db');
+  const dbPath = path.join(CURRENT_PROJECT_PATH, '.cortex', 'cortex.db');
   if (!fs.existsSync(dbPath)) {
     console.error('[Cortex Watcher] DB not found, watcher disabled');
     return;

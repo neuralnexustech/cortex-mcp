@@ -48,7 +48,17 @@ export function useProjectData() {
       agents: data.agents || [],
       pipelines: data.pipelines || [],
       pipeline_active: data.pipeline_active || null,
+      projects_current: data.projects_current || '',
+      projects_available: data.projects_available || [],
     }),
+  })
+}
+
+export function useProjects() {
+  return useQuery({
+    queryKey: ['projects'],
+    queryFn: () => fetchJSON('/api/projects'),
+    staleTime: 10000,
   })
 }
 
