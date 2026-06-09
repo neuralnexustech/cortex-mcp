@@ -322,6 +322,132 @@ export function getSnapshots(db) {
   return db.prepare('SELECT * FROM snapshots ORDER BY id DESC').all();
 }
 
+// ─── Pipeline ────────────────────────────────────────────────────────────────
+
+export function createPipelineRun(db, data) {
+  try {
+    const plan = data.plan ? JSON.stringify(data.plan) : null;
+    db.prepare(
+      'INSERT INTO pipeline_runs (goal, status, plan, session_id, agent, max_retries, pause_on_human) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      data.goal, data.status || 'planning', plan,
+      data.session_id || null, data.agent || null,
+      data.max_retries ?? 3, data.pause_on_human ?? 1
+    );
+    return db.prepare('SELECT * FROM pipeline_runs ORDER BY id DESC LIMIT 1').get();
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+export function getPipelineRun(db, id) {
+  return db.prepare('SELECT * FROM pipeline_runs WHERE id = ?').get(id) ?? null;
+}
+
+export function getActivePipelineRun(db) {
+  return db.prepare("SELECT * FROM pipeline_runs WHERE status IN ('planning', 'running', 'paused', 'waiting_human') ORDER BY id DESC LIMIT 1").get() ?? null;
+}
+
+export function updatePipelineRun(db, id, data) {
+  const fields = [];
+  const values = [];
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      if (key === 'plan') {
+        fields.push('plan = ?');
+        values.push(typeof value === 'string' ? value : JSON.stringify(value));
+      } else {
+        fields.push(`${key} = ?`);
+        values.push(value);
+      }
+    }
+  }
+  if (fields.length === 0) return;
+  values.push(id);
+  fields.push('updated_at = CURRENT_TIMESTAMP');
+  if (data.status === 'completed' || data.status === 'failed') {
+    fields.push('completed_at = CURRENT_TIMESTAMP');
+  }
+  db.prepare(`UPDATE pipeline_runs SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+  return db.prepare('SELECT * FROM pipeline_runs WHERE id = ?').get(id);
+}
+
+export function getPipelineRuns(db) {
+  return db.prepare('SELECT * FROM pipeline_runs ORDER BY id DESC LIMIT 20').all();
+}
+
+export function addPipelineTask(db, data) {
+  try {
+    db.prepare(
+      'INSERT INTO pipeline_tasks (pipeline_id, parent_id, label, action_type, command, expected_result, status, sort_order, agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      data.pipeline_id, data.parent_id ?? null, data.label,
+      data.action_type || 'agent', data.command ?? null,
+      data.expected_result ?? null, data.status || 'pending',
+      data.sort_order ?? 0, data.agent ?? null
+    );
+    return db.prepare('SELECT * FROM pipeline_tasks ORDER BY id DESC LIMIT 1').get();
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+export function getPipelineTasks(db, pipelineId) {
+  return db.prepare('SELECT * FROM pipeline_tasks WHERE pipeline_id = ? ORDER BY sort_order ASC, id ASC').all(pipelineId);
+}
+
+export function getNextPipelineTask(db, pipelineId) {
+  return db.prepare(
+    "SELECT * FROM pipeline_tasks WHERE pipeline_id = ? AND status = 'pending' ORDER BY sort_order ASC, id ASC LIMIT 1"
+  ).get(pipelineId) ?? null;
+}
+
+export function updatePipelineTask(db, id, data) {
+  const fields = [];
+  const values = [];
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      fields.push(`${key} = ?`);
+      values.push(value);
+    }
+  }
+  if (fields.length === 0) return;
+  values.push(id);
+  if (data.status === 'in_progress' && !data.started_at) {
+    db.prepare("UPDATE pipeline_tasks SET started_at = CURRENT_TIMESTAMP WHERE id = ?").run(id);
+  }
+  if (data.status === 'completed' || data.status === 'failed') {
+    db.prepare("UPDATE pipeline_tasks SET completed_at = CURRENT_TIMESTAMP WHERE id = ?").run(id);
+  }
+  db.prepare(`UPDATE pipeline_tasks SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+  return db.prepare('SELECT * FROM pipeline_tasks WHERE id = ?').get(id);
+}
+
+// ─── Auto-Heal ───────────────────────────────────────────────────────────────
+
+export function getBrokenFiles(db) {
+  return db.prepare("SELECT * FROM file_tree WHERE status IN ('broken', 'missing')").all();
+}
+
+export function getFailedTests(db) {
+  return db.prepare("SELECT * FROM tests WHERE status = 'failed'").all();
+}
+
+export function getCheckpointForFile(db, filePath) {
+  return db.prepare('SELECT * FROM checkpoints WHERE file_path = ? ORDER BY id DESC LIMIT 1').get(filePath) ?? null;
+}
+
+export function markHealed(db, table, id, notes) {
+  if (table === 'file') {
+    db.prepare("UPDATE file_tree SET status = 'done' WHERE id = ?").run(id);
+  } else if (table === 'test') {
+    db.prepare("UPDATE tests SET status = 'pending', error_output = NULL WHERE id = ?").run(id);
+  }
+  db.prepare(
+    "INSERT INTO progress_log (task, notes, agent) VALUES (?, ?, 'auto-heal')"
+  ).run(`Healed ${table} #${id}`, notes);
+}
+
 // ─── Checkpoints ─────────────────────────────────────────────────────────────
 
 export function saveCheckpoint(db, data) {

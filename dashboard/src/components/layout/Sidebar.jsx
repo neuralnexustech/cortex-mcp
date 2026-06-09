@@ -3,11 +3,12 @@ import { cn } from '../../lib/utils'
 import {
   LayoutDashboard, FolderKanban, FileCode, FlaskConical,
   Activity, Bug, BookOpen, Search, BookMarked,
-  Settings, Network, ChevronLeft, Menu, Brain
+  Settings, Network, ChevronLeft, Menu, Brain, Zap
 } from 'lucide-react'
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'pipeline', label: 'Pipeline', icon: Zap },
   { id: 'features', label: 'Features', icon: FolderKanban },
   { id: 'files', label: 'File Tree', icon: FileCode },
   { id: 'tests', label: 'Tests', icon: FlaskConical },

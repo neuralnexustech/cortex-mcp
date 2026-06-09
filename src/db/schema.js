@@ -179,4 +179,39 @@ CREATE TABLE IF NOT EXISTS workflow_nodes (
   FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE,
   FOREIGN KEY (parent_id) REFERENCES workflow_nodes(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+  id INTEGER PRIMARY KEY,
+  goal TEXT NOT NULL,
+  status TEXT DEFAULT 'planning',
+  plan TEXT,
+  current_task_id INTEGER,
+  retry_count INTEGER DEFAULT 0,
+  max_retries INTEGER DEFAULT 3,
+  pause_on_human BOOLEAN DEFAULT 1,
+  session_id TEXT,
+  agent TEXT,
+  started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS pipeline_tasks (
+  id INTEGER PRIMARY KEY,
+  pipeline_id INTEGER NOT NULL,
+  parent_id INTEGER,
+  label TEXT NOT NULL,
+  action_type TEXT DEFAULT 'agent',
+  command TEXT,
+  expected_result TEXT,
+  status TEXT DEFAULT 'pending',
+  retry_count INTEGER DEFAULT 0,
+  error_output TEXT,
+  sort_order INTEGER DEFAULT 0,
+  agent TEXT,
+  started_at DATETIME,
+  completed_at DATETIME,
+  FOREIGN KEY (pipeline_id) REFERENCES pipeline_runs(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_id) REFERENCES pipeline_tasks(id) ON DELETE CASCADE
+);
 `;

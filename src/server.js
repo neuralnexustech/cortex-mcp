@@ -28,6 +28,7 @@ import { registerContradictionTools } from './tools/contradictions.js';
 import { registerTokenTools } from './tools/tokens.js';
 import { registerRoleTools } from './tools/roles.js';
 import { registerRelationshipTools } from './tools/relationships.js';
+import { registerPipelineTools } from './pipeline/index.js';
 import { registerPrompts } from './prompts/index.js';
 import { buildProjectResourceHandlers } from './resources/project.js';
 import { createAuditLogger } from './audit/index.js';
@@ -129,6 +130,7 @@ registerContradictionTools(server, withDb);
 registerTokenTools(server, withDb);
 registerRoleTools(server, withDb);
 registerRelationshipTools(server, withDb);
+registerPipelineTools(server, withDb);
 
 // ─── V2.1: Prompts, Enhanced Resources, Audit, Memory ─────────────────────
 registerPrompts(server);

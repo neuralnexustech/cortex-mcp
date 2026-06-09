@@ -9,6 +9,9 @@ import { initWebSocket, emitEvent } from '../websocket/server.js';
 import { createAuditLogger } from '../audit/index.js';
 import { createEpisodicMemory } from '../memory/episodic.js';
 import { createContextCompiler } from '../memory/compiler.js';
+import { pausePipeline as pipelinePause, resumePipeline as pipelineResume, cancelPipeline as pipelineCancel, runPipelineLoop } from '../pipeline/loop.js';
+import { planGoal, createPipelineFromPlan } from '../pipeline/planner.js';
+import { createExecutor } from '../pipeline/executor.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,7 +62,9 @@ function registerRoutes(router) {
       snippets: queries.getSnippets(db),
       research: queries.getResearch(db),
       decisions: queries.getDecisions(db),
-      snapshots: queries.getSnapshots(db)
+      snapshots: queries.getSnapshots(db),
+      pipelines: queries.getPipelineRuns(db).slice(0, 5),
+      pipeline_active: queries.getActivePipelineRun(db)
     }));
   });
 
@@ -247,6 +252,76 @@ function registerRoutes(router) {
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  // Pipeline endpoints
+  router.post('/pipeline/start', (req, res) => {
+    const { goal, max_retries, pause_on_human, session_id, agent } = req.body || {};
+    if (!goal) return res.status(400).json({ error: 'Missing goal' });
+    handleRoute(res, (db) => {
+      const plan = planGoal(db, goal, { max_retries, pause_on_human, session_id, agent });
+      const result = createPipelineFromPlan(db, plan, { max_retries, pause_on_human, session_id, agent });
+      if (result.run?.error) return { error: result.run.error };
+      const executor = createExecutor(db, {});
+      runPipelineLoop(db, result.run.id, executor, {});
+      return {
+        success: true,
+        pipeline_id: result.run.id,
+        goal,
+        task_count: result.tasks.length,
+        tasks: result.tasks.map(t => ({ id: t.id, label: t.label, status: t.status }))
+      };
+    });
+  });
+
+  router.get('/pipeline/:id', (req, res) => {
+    handleRoute(res, (db) => {
+      const tasks = queries.getPipelineTasks(db, parseInt(req.params.id));
+      const run = queries.getPipelineRun(db, parseInt(req.params.id));
+      if (!run) return { error: 'Pipeline not found' };
+      return {
+        run,
+        tasks,
+        counts: {
+          total: tasks.length,
+          pending: tasks.filter(t => t.status === 'pending').length,
+          in_progress: tasks.filter(t => t.status === 'in_progress').length,
+          completed: tasks.filter(t => t.status === 'completed').length,
+          failed: tasks.filter(t => t.status === 'failed').length,
+        }
+      };
+    });
+  });
+
+  router.get('/pipeline-history', (req, res) => {
+    handleRoute(res, (db) => queries.getPipelineRuns(db));
+  });
+
+  router.post('/pipeline/pause', (req, res) => {
+    const { id } = req.body;
+    handleRoute(res, (db) => {
+      const run = id ? queries.getPipelineRun(db, id) : queries.getActivePipelineRun(db);
+      if (!run) return { error: 'No active pipeline' };
+      return pipelinePause(db, run.id);
+    });
+  });
+
+  router.post('/pipeline/resume', (req, res) => {
+    const { id } = req.body;
+    handleRoute(res, (db) => {
+      const run = id ? queries.getPipelineRun(db, id) : queries.getActivePipelineRun(db);
+      if (!run) return { error: 'No active pipeline' };
+      return pipelineResume(db, run.id);
+    });
+  });
+
+  router.post('/pipeline/cancel', (req, res) => {
+    const { id } = req.body;
+    handleRoute(res, (db) => {
+      const run = id ? queries.getPipelineRun(db, id) : queries.getActivePipelineRun(db);
+      if (!run) return { error: 'No active pipeline' };
+      return pipelineCancel(db, run.id);
+    });
   });
 
   // GET /human-questions — list pending questions (for dashboard)

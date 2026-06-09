@@ -18,6 +18,11 @@ export function useProjectData() {
       if (msg?.type === 'db_changed') {
         queryClient.invalidateQueries({ queryKey: ['project'] })
       }
+      if (msg?.type?.startsWith('pipeline_')) {
+        queryClient.invalidateQueries({ queryKey: ['pipeline'] })
+        queryClient.invalidateQueries({ queryKey: ['pipeline-history'] })
+        queryClient.invalidateQueries({ queryKey: ['project'] })
+      }
     }
     window.addEventListener('cortex-ws', onWsMessage)
     return () => window.removeEventListener('cortex-ws', onWsMessage)
@@ -41,7 +46,25 @@ export function useProjectData() {
       decisions: data.decisions || [],
       relationships: data.relationships || [],
       agents: data.agents || [],
+      pipelines: data.pipelines || [],
+      pipeline_active: data.pipeline_active || null,
     }),
+  })
+}
+
+export function usePipelineStatus(pipelineId) {
+  return useQuery({
+    queryKey: ['pipeline', pipelineId],
+    queryFn: () => fetchJSON(`/api/pipeline/${pipelineId}`),
+    enabled: !!pipelineId,
+    refetchInterval: 3000,
+  })
+}
+
+export function usePipelineHistory() {
+  return useQuery({
+    queryKey: ['pipeline-history'],
+    queryFn: () => fetchJSON('/api/pipeline-history'),
   })
 }
 

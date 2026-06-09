@@ -17,9 +17,11 @@ const Research = lazy(() => import('../../tabs/Research'))
 const Dictionary = lazy(() => import('../../tabs/Dictionary'))
 const Graph = lazy(() => import('../../tabs/Graph'))
 const Settings = lazy(() => import('../../tabs/Settings'))
+const Pipeline = lazy(() => import('../../tabs/Pipeline'))
 
 const TABS = {
   overview: Overview,
+  pipeline: Pipeline,
   features: Features,
   files: FileTree,
   tests: Tests,
