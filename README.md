@@ -29,7 +29,8 @@ Agent starts → cortex_get_state → knows everything → works → cortex_save
 - **Knowledge Graph** — relationships between features, files, tests, issues
 
 ### Live Dashboard
-- **11 tabs** — Overview, Features, FileTree, Tests, Progress, Issues, Library, Research, Dictionary, Graph, Settings
+- **12 tabs** — Overview, Pipeline, Features, FileTree, Tests, Progress, Issues, Library, Research, Dictionary, Graph, Settings
+- **Pipeline tab** — Start a goal, watch tasks execute live with progress bar, pause/resume/cancel
 - **D3 Knowledge Graph** — force-directed visualization with 27+ nodes, drag/zoom/pan
 - **WebSocket Live Push** — dashboard updates instantly when data changes
 - **Ctrl+K Search** — global search across all tables
@@ -41,6 +42,12 @@ Read project data without tool calls via `cortex://` URIs:
 
 ### MCP Prompts (5 templates)
 Pre-built session workflows: `start-session`, `debug-issue`, `review-code`, `init-project`, `end-session`
+
+### V2.4 Modules — Autonomous Pipeline
+- **Planner** — natural language goal → ordered DAG of tasks with dependency resolution
+- **Executor** — auto-executes tasks (agent/command/test/verify), retries failures up to 3×
+- **Loop Controller** — pause/resume/cancel with WebSocket live push to dashboard
+- **Auto-Heal** — detects broken files (restores from checkpoint), resets failed tests
 
 ### V2.1 Modules
 - **Audit Trail** — structured logging for every tool call
@@ -100,6 +107,67 @@ npm install
 cd dashboard && npm install && npm run build && cd ..
 node src/server.js
 ```
+
+## Autonomous Pipeline (V2.4)
+
+Cortex Pipeline is a **goal-driven autonomous execution engine**. Give it a goal, and it plans, executes, tests, and heals itself — no step-by-step prompting required.
+
+```
+Goal → Planner → DAG Tasks → Executor → Test → Auto-Heal → Done
+                              ↕
+                    pause / resume / cancel
+                         (WebSocket live)
+```
+
+### How It Works
+
+```
+You type: "Build authentication system"
+    ↓
+Planner breaks goal into ordered DAG:
+  [1] Scaffold routes        → [2] Create User model
+  → [3] JWT middleware       → [4] Login endpoint
+  → [5] Register endpoint    → [6] Password hashing
+  → [7] Run tests            → [8] Verify security
+    ↓
+Executor auto-runs each task:
+  ✓ Scaffold routes      (1.2s)
+  ✓ Create User model    (0.8s)
+  ✗ JWT middleware       → retry #1 → ✓  (2.1s)
+  ✓ Login endpoint       (0.5s)
+  ...
+    ↓
+Auto-Heal detects broken files → restores from checkpoint
+Auto-Heal resets failed tests   → retries with new approach
+    ↓
+Done. Pipeline history saved. Dashboard updated via WebSocket.
+```
+
+### 8 Pipeline MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `cortex_pipeline_start` | Give a goal → DAG planned + executed |
+| `cortex_pipeline_status` | Check progress, task states, retry counts |
+| `cortex_pipeline_pause` | Pause mid-execution |
+| `cortex_pipeline_resume` | Resume from where it paused |
+| `cortex_pipeline_cancel` | Cancel remaining tasks |
+| `cortex_pipeline_plan` | Preview task breakdown (dry run) |
+| `cortex_auto_heal` | Fix broken files, reset failed tests |
+| `cortex_pipeline_history` | List all past pipeline runs |
+
+### Why This Is Different
+
+| Traditional AI Assistants | Cortex Pipeline |
+|---|---|
+| Wait for your next prompt | Executes autonomously toward a goal |
+| You give step-by-step instructions | You give a goal, it plans the steps |
+| You babysit each action | Auto-retry on failure (up to 3×) |
+| No memory of past runs | Full pipeline history + checkpoints |
+| Single-threaded Q&A | Multi-task DAG with priority ordering |
+| You fix broken files | Auto-heal restores from checkpoints |
+
+**In short:** Most AI tools are *reactive* — you drive. Cortex Pipeline is *proactive* — it drives itself, and you just set the destination.
 
 ## Session Lifecycle
 
@@ -219,7 +287,7 @@ Live at `http://localhost:3001` when the server runs.
 - **Ctrl+K** — Global search overlay
 - **Graph tab** — D3 force-directed knowledge graph
 - **LIVE indicator** — WebSocket connection status
-- **11 tabs** — Overview, Features, FileTree, Tests, Progress, Issues, Library, Research, Dictionary, Graph, Settings
+- **12 tabs** — Overview, Pipeline, Features, FileTree, Tests, Progress, Issues, Library, Research, Dictionary, Graph, Settings
 
 ## REST API
 
@@ -233,6 +301,12 @@ Live at `http://localhost:3001` when the server runs.
 | `GET /api/episodic` | Episodic memory events |
 | `GET /api/context` | Compiled project state |
 | `GET /ws-status` | WebSocket status |
+| `POST /api/pipeline/start` | Start a pipeline from a goal |
+| `GET /api/pipeline/:id` | Get pipeline run status + tasks |
+| `GET /api/pipeline-history` | List past pipeline runs |
+| `POST /api/pipeline/pause` | Pause active pipeline |
+| `POST /api/pipeline/resume` | Resume paused pipeline |
+| `POST /api/pipeline/cancel` | Cancel active pipeline |
 | `POST /human-answer` | Submit answer to pending question |
 
 ## MCP Resources
@@ -265,6 +339,11 @@ cortex-mcp/
 │   │   ├── init.js            # DB connection (WAL mode)
 │   │   ├── queries.js         # Read/write functions
 │   │   └── cortex_v2.sql      # V2 migration
+│   ├── pipeline/              # V2.4 Autonomous pipeline
+│   │   ├── planner.js         # Goal → DAG task breakdown
+│   │   ├── executor.js        # Auto-execute + retry
+│   │   ├── loop.js            # Pause/resume/cancel controller
+│   │   └── index.js           # 8 MCP tool registration
 │   ├── tools/                 # 31 MCP tools
 │   │   ├── state.js           # cortex_get_state
 │   │   ├── tasks.js           # cortex_get_next_task
